@@ -1871,6 +1871,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@berry/plugin-portable-shell@workspace:packages/plugin-portable-shell":
+  version: 0.0.0-use.local
+  resolution: "@berry/plugin-portable-shell@workspace:packages/plugin-portable-shell"
+  dependencies:
+    "@berry/builder": "workspace:0.0.0"
+    "@berry/core": "workspace:0.0.0"
+    "@berry/fslib": "workspace:0.0.6"
+    "@types/micromatch": "npm:^3.1.0"
+    micromatch: "npm:^4.0.2"
+  languageName: unknown
+  linkType: soft
+
 "@berry/plugin-stage@workspace:0.0.0, @berry/plugin-stage@workspace:packages/plugin-stage":
   version: 0.0.0-use.local
   resolution: "@berry/plugin-stage@workspace:packages/plugin-stage"

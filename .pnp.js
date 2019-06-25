@@ -152,6 +152,12 @@ function $$SETUP_STATE(hydrateRuntimeState) {
         ]
       ],
       [
+        "@berry/plugin-portable-shell",
+        [
+          "workspace:packages/plugin-portable-shell"
+        ]
+      ],
+      [
         "@berry/plugin-stage",
         [
           "workspace:packages/plugin-stage"
@@ -330,6 +336,7 @@ function $$SETUP_STATE(hydrateRuntimeState) {
       44,
       43,
       34,
+      33,
       30,
       29,
       28,
@@ -10085,6 +10092,43 @@ function $$SETUP_STATE(hydrateRuntimeState) {
                 [
                   "@berry/pnp",
                   "workspace:packages/berry-pnp"
+                ]
+              ]
+            }
+          ]
+        ]
+      ],
+      [
+        "@berry/plugin-portable-shell",
+        [
+          [
+            "workspace:packages/plugin-portable-shell",
+            {
+              "packageLocation": "./packages/plugin-portable-shell/",
+              "packageDependencies": [
+                [
+                  "@berry/plugin-portable-shell",
+                  "workspace:packages/plugin-portable-shell"
+                ],
+                [
+                  "@berry/builder",
+                  "workspace:packages/berry-builder"
+                ],
+                [
+                  "@berry/core",
+                  "workspace:packages/berry-core"
+                ],
+                [
+                  "@berry/fslib",
+                  "workspace:packages/berry-fslib"
+                ],
+                [
+                  "@types/micromatch",
+                  "npm:3.1.0"
+                ],
+                [
+                  "micromatch",
+                  "npm:4.0.2"
                 ]
               ]
             }

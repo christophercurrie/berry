@@ -1,0 +1,17 @@
+{
+  "name": "@berry/plugin-portable-shell",
+  "private": true,
+  "main": "./sources/index.ts",
+  "dependencies": {
+    "@berry/core": "workspace:0.0.0",
+    "@berry/fslib": "workspace:0.0.6",
+    "micromatch": "^4.0.2"
+  },
+  "devDependencies": {
+    "@berry/builder": "workspace:0.0.0",
+    "@types/micromatch": "^3.1.0"
+  },
+  "scripts": {
+    "build:plugin-portable-shell": "run @berry-build-plugin"
+  }
+}

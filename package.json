@@ -68,6 +68,8 @@
     }
   },
   "scripts": {
+    "foo": "nginx -s quit",
+    "printenv": "node -p process.env",
     "gen-tssdk": "pnpify --sdk scripts",
     "test:lint": "eslint packages/*/sources/**/*.ts",
     "test:unit": "jest"
