@@ -127,20 +127,12 @@ const tauModule = new pl.type.Module(`constraints`, {
     ]);
   },
 
-  [`workspace_field_test/3`]: (thread, point, atom) => {
-    const [workspaceCwd, fieldName, checkCode] = atom.args;
-
-    thread.prepend([new pl.type.State(
-      point.goal.replace(new pl.type.Term(`workspace_field_test`, [
-        workspaceCwd,
-        fieldName,
-        checkCode,
-        new pl.type.Term(`[]`, []),
-      ])),
-      point.substitution,
-      point,
-    )]);
-  },
+  [`workspace_field_test/3`]: [
+    rule(
+      term(`workspace_field_test`, [variable(`WorkspaceCwd`), variable(`FieldName`), variable(`CheckCode`)]),
+      term(`workspace_field_test`, [variable(`WorkspaceCwd`), variable(`FieldName`), variable(`CheckCode`), term(`[]`)]),
+    ),
+  ],
 
   [`workspace_field_test/4`]: (thread, point, atom) => {
     const [workspaceCwd, fieldName, checkCode, checkArgv] = atom.args;
