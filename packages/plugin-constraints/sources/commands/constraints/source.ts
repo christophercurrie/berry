@@ -30,6 +30,6 @@ export default class ConstraintsSourceCommand extends BaseCommand {
     const {project} = await Project.find(configuration, this.context.cwd);
     const constraints = await Constraints.find(project);
 
-    this.context.stdout.write(this.verbose ? constraints.fullSource : constraints.source);
+    this.context.stdout.write(this.verbose ? `${constraints.getProjectDatabase()}\n${constraints.fullSource}` : constraints.source);
   }
 }

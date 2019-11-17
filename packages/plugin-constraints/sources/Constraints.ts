@@ -4,6 +4,7 @@ import {xfs, ppath, PortablePath, toFilename}                from '@yarnpkg/fsli
 import pl                                                    from 'tau-prolog';
 
 import {linkProjectToSession}                                from './tauModule';
+import {DependencyType}                                      from './util';
 
 export type EnforcedDependency = {
   workspace: Workspace,
@@ -17,12 +18,6 @@ export type EnforcedField = {
   fieldPath: string,
   fieldValue: string | null,
 };
-
-export enum DependencyType {
-  Dependencies = 'dependencies',
-  DevDependencies = 'devDependencies',
-  PeerDependencies = 'peerDependencies',
-}
 
 const DEPENDENCY_TYPES = [
   DependencyType.Dependencies,
@@ -213,7 +208,7 @@ export class Constraints {
   }
 
   get fullSource() {
-    return `${this.getProjectDatabase()}\n${this.source}\n${this.getDeclarations()}`;
+    return `${this.source}\n${this.getDeclarations()}`;
   }
 
   private createSession() {
