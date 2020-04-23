@@ -11,17 +11,28 @@ export const getPnpPath = (project: Project) => {
   let mainFilename;
   let otherFilename;
 
+  let mainLoaderFilename;
+  let otherLoaderFilename;
+
   if (project.topLevelWorkspace.manifest.type === `module`) {
     mainFilename = `.pnp.cjs`;
     otherFilename = `.pnp.js`;
+
+    mainLoaderFilename = '.pnp-loader.js';
+    otherLoaderFilename = '.pnp-loader.mjs';
   } else {
     mainFilename = `.pnp.js`;
     otherFilename = `.pnp.cjs`;
+
+    mainLoaderFilename = '.pnp-loader.mjs';
+    otherLoaderFilename = '.pnp-loader.js';
   }
 
   return {
     main: ppath.join(project.cwd, mainFilename as Filename),
     other: ppath.join(project.cwd, otherFilename as Filename),
+    mainLoader: ppath.join(project.cwd, mainLoaderFilename as Filename),
+    otherLoader: ppath.join(project.cwd, otherLoaderFilename as Filename),
   };
 };
 
@@ -30,8 +41,9 @@ export const quotePathIfNeeded = (path: string) => {
 };
 
 async function setupScriptEnvironment(project: Project, env: {[key: string]: string}, makePathWrapper: (name: string, argv0: string, args: Array<string>) => Promise<void>) {
-  const pnpPath: PortablePath = getPnpPath(project).main;
+  const {main: pnpPath, mainLoader: pnpLoaderPath} = getPnpPath(project);
   const pnpRequire = `--require ${quotePathIfNeeded(npath.fromPortablePath(pnpPath))}`;
+  const enablePnpLoader = `--experimental-loader ${quotePathIfNeeded(npath.fromPortablePath(pnpLoaderPath))}`;
 
   if (pnpPath.includes(' ') && semver.lt(process.versions.node, '12.0.0'))
     throw new Error(`Expected the build location to not include spaces when using Node < 12.0.0 (${process.versions.node})`);
@@ -44,11 +56,22 @@ async function setupScriptEnvironment(project: Project, env: {[key: string]: str
 
     env.NODE_OPTIONS = nodeOptions;
   }
+
+  if (project.configuration.get(`pnpEnableExperimentalLoader`) && xfs.existsSync(pnpLoaderPath)) {
+    let nodeOptions = env.NODE_OPTIONS || ``;
+
+    nodeOptions = nodeOptions.replace(/\s*--experimental-loader\s+\S*\.pnp-loader\.m?js\s*/g, ` `).trim();
+    nodeOptions = nodeOptions ? `${enablePnpLoader} ${nodeOptions}` : enablePnpLoader;
+
+    env.NODE_OPTIONS = nodeOptions;
+  }
 }
 
 async function populateYarnPaths(project: Project, definePath: (path: PortablePath | null) => void) {
   definePath(getPnpPath(project).main);
   definePath(getPnpPath(project).other);
+  definePath(getPnpPath(project).mainLoader);
+  definePath(getPnpPath(project).otherLoader);
 
   definePath(project.configuration.get(`pnpDataPath`));
   definePath(project.configuration.get(`pnpUnpluggedFolder`));
@@ -100,6 +123,11 @@ const plugin: Plugin<CoreHooks & StageHooks> = {
       description: `Path of the file where the PnP data (used by the loader) must be written`,
       type: SettingsType.ABSOLUTE_PATH,
       default: `./.pnp.data.json`,
+    },
+    pnpEnableExperimentalLoader: {
+      description: `Enables experimental support for ESM loaders`,
+      type: SettingsType.BOOLEAN,
+      default: false,
     },
   },
   linkers: [

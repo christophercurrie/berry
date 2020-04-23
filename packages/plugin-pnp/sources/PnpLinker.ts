@@ -2,8 +2,9 @@ import {Linker, LinkOptions, MinimalLinkOptions, Manifest, MessageName, Dependen
 import {FetchResult, Ident, Locator, Package, BuildDirective, BuildType}                from '@yarnpkg/core';
 import {miscUtils, structUtils}                                                         from '@yarnpkg/core';
 import {CwdFS, FakeFS, PortablePath, npath, ppath, toFilename, xfs}                     from '@yarnpkg/fslib';
-import {generateInlinedScript, generateSplitScript, PnpSettings}                        from '@yarnpkg/pnp';
+import {generateInlinedScript, generateModuleLoader, generateSplitScript, PnpSettings}  from '@yarnpkg/pnp';
 import {UsageError}                                                                     from 'clipanion';
+import {basename}                                                                       from 'path';
 
 import {AbstractPnpInstaller}                                                           from './AbstractPnpInstaller';
 import {getPnpPath}                                                                     from './index';
@@ -118,9 +119,11 @@ export class PnpInstaller extends AbstractPnpInstaller {
     const pnpDataPath = this.opts.project.configuration.get(`pnpDataPath`);
 
     await xfs.removePromise(pnpPath.other);
+    await xfs.removePromise(pnpPath.otherLoader);
 
     if (this.opts.project.configuration.get(`nodeLinker`) !== `pnp`) {
       await xfs.removePromise(pnpPath.main);
+      await xfs.removePromise(pnpPath.mainLoader);
       await xfs.removePromise(pnpDataPath);
 
       return;
@@ -150,6 +153,15 @@ export class PnpInstaller extends AbstractPnpInstaller {
 
       await xfs.changeFilePromise(pnpDataPath, dataFile, {automaticNewlines: true});
       await xfs.chmodPromise(pnpDataPath, 0o644);
+    }
+
+    if (this.opts.project.configuration.get(`pnpEnableExperimentalLoader`)) {
+      const loaderFile = generateModuleLoader(basename(pnpPath.main));
+
+      await xfs.changeFilePromise(pnpPath.mainLoader, loaderFile, {automaticNewlines: true});
+      await xfs.chmodPromise(pnpPath.mainLoader, 0o755);
+    } else {
+      await xfs.removePromise(pnpPath.mainLoader);
     }
 
     const pnpUnpluggedFolder = this.opts.project.configuration.get(`pnpUnpluggedFolder`);
