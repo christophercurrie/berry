@@ -39,7 +39,7 @@ async function setupScriptEnvironment(project: Project, env: {[key: string]: str
   if (xfs.existsSync(pnpPath)) {
     let nodeOptions = env.NODE_OPTIONS || ``;
 
-    nodeOptions = nodeOptions.replace(/\s*--require\s+\S*\.pnp\.js\s*/g, ` `).trim();
+    nodeOptions = nodeOptions.replace(/\s*--require\s+\S*\.pnp\.c?js\s*/g, ` `).trim();
     nodeOptions = nodeOptions ? `${pnpRequire} ${nodeOptions}` : pnpRequire;
 
     env.NODE_OPTIONS = nodeOptions;
