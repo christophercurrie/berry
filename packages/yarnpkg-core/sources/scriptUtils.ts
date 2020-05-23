@@ -2,6 +2,7 @@ import {CwdFS, Filename, NativePath, PortablePath, ZipOpenFS} from '@yarnpkg/fsl
 import {xfs, npath, ppath, toFilename}                        from '@yarnpkg/fslib';
 import {getLibzipPromise}                                     from '@yarnpkg/libzip';
 import {execute}                                              from '@yarnpkg/shell';
+import os                                                     from 'os';
 import {PassThrough, Readable, Writable}                      from 'stream';
 
 import {Configuration}                                        from './Configuration';
@@ -63,6 +64,10 @@ export async function makeScriptEnv({project, binFolder, lifecycleScript}: {proj
 
   const nBinFolder = npath.fromPortablePath(binFolder);
 
+  scriptEnv.PATH = scriptEnv.PATH
+    ? `${nBinFolder}${npath.delimiter}${scriptEnv.PATH}`
+    : `${nBinFolder}`;
+
   // We expose the base folder in the environment so that we can later add the
   // binaries for the dependencies of the active package
   scriptEnv.BERRY_BIN_FOLDER = npath.fromPortablePath(nBinFolder);
@@ -70,6 +75,31 @@ export async function makeScriptEnv({project, binFolder, lifecycleScript}: {proj
   // Register some binaries that must be made available in all subprocesses
   // spawned by Yarn (we thus ensure that they always use the right version)
   await makePathWrapper(binFolder, toFilename(`node`), process.execPath);
+  if (process.platform === `win32`) {
+    // On windows CMD and PowerShell, the PATHEXT environment variable comes into play when looking
+    // for the command to execute. By default, it favours .EXE files over the .CMD file that
+    // makePathWrapper has created.
+    // We try to symlink the node.exe yarn was started with into the generated bin folder to ensure
+    // node runs the correct binary.
+    try {
+      await xfs.symlinkPromise(npath.toPortablePath(process.execPath), ppath.join(binFolder, npath.basename(process.execPath)));
+    } catch (e) {
+      // In windows < 10 creating symlinks requires administrator permissions.
+      if (e.code !== `EPERM`)
+        throw e;
+
+      // Before throwing, validate that we really need to symlink node.exe. In most cases, presumably,
+      // process.execPath will be the node.exe found on the PATH so symlinking isn't strictly necessary
+      const {stdout} = await execUtils.execvp(`node`, [`--print`, `process.execPath`], {
+        cwd: binFolder,
+        env: scriptEnv,
+      });
+
+      if (stdout.trim() !== process.execPath) {
+        throw new Error(`Running this yarn command requires your shell to run with administrator privileges`);
+      }
+    }
+  }
 
   if (YarnVersion !== null) {
     await makePathWrapper(binFolder, toFilename(`run`), process.execPath, [process.argv[1], `run`]);
@@ -80,10 +110,6 @@ export async function makeScriptEnv({project, binFolder, lifecycleScript}: {proj
 
   if (project)
     scriptEnv.INIT_CWD = npath.fromPortablePath(project.configuration.startingCwd);
-
-  scriptEnv.PATH = scriptEnv.PATH
-    ? `${nBinFolder}${npath.delimiter}${scriptEnv.PATH}`
-    : `${nBinFolder}`;
 
   scriptEnv.npm_execpath = `${nBinFolder}${npath.sep}yarn`;
   scriptEnv.npm_node_execpath = `${nBinFolder}${npath.sep}node`;
